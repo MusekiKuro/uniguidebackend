@@ -1,67 +1,40 @@
-# app/services/ai_service.py
 import json
-from anthropic import Anthropic
+import google.generativeai as genai
 from app.config import settings
 
-client = Anthropic()
+genai.configure(api_key=settings.gemini_api_key)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-def parse_student_request(user_query: str) -> dict:
-    """
-    Парсит запрос абитуриента через Claude API.
 
-    Входные данные: "Я набрал 90 баллов на ЕНТ, хочу IT в Алматы с грантом"
-    Выход: {
-        "ent_score": 90,
-        "preferred_city": "Алматы",
-        "preferred_specialties": ["IT"],
-        "budget": "grant"
-    }
-    """
+def parse_student_request(user_query):
+    prompt = f"""Ты ассистент для абитуриентов Казахстана.
+Распарси запрос студента и верни ТОЛЬКО валидный JSON.
 
-    system_prompt = """Ты — ассистент для абитуриентов Казахстана. 
-    Твоя задача — распарсить запрос студента и вернуть JSON с ключами:
-    - ent_score (int, 0-150): баллы ЕНТ (если не указаны, верни null)
-    - preferred_city (str): город (Астана, Алматы, Тараз и т.д.). Если не указан, верни null
-    - preferred_specialties (list): направления (IT, Инженерия, Педагогика и т.д.). Если не указаны, верни []
-    - budget (str): "grant" если ищет грант, "paid" если платное, "any" если всё равно
+Запрос: {user_query}
 
-    Вернись ТОЛЬКО валидным JSON, без лишнего текста."""
+JSON:"""
 
     try:
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=200,
-            system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_query}
-            ]
-        )
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
 
-        response_text = message.content[0].text.strip()
+        # Убираем markdown блоки
+        if "json" in response_text and "```" in response_text:
+            start = response_text.find("{")
+            end = response_text.rfind("}") + 1
+            response_text = response_text[start:end]
 
-        # Парсим JSON
         parsed = json.loads(response_text)
 
-        # Валидация
-        result = {
+        return {
             "ent_score": parsed.get("ent_score"),
             "preferred_city": parsed.get("preferred_city"),
             "preferred_specialties": parsed.get("preferred_specialties", []),
             "budget": parsed.get("budget", "any")
         }
 
-        return result
-
-    except json.JSONDecodeError:
-        # Если Claude вернул невалидный JSON, возвращаем пустой результат
-        return {
-            "ent_score": None,
-            "preferred_city": None,
-            "preferred_specialties": [],
-            "budget": "any"
-        }
     except Exception as e:
-        print(f"Ошибка при парсинге запроса: {e}")
+        print(f"Error: {e}")
         return {
             "ent_score": None,
             "preferred_city": None,
@@ -69,41 +42,25 @@ def parse_student_request(user_query: str) -> dict:
             "budget": "any"
         }
 
-def generate_ai_explanation(university_name: str, student_ent: int, uni_min_ent: int,
-                            specialties_match: list, grant_chance: str) -> str:
-    """
-    Генерирует объяснение через Claude, почему этот вуз подходит.
 
-    Пример: "КБТУ подходит тебе, потому что твой ЕНТ (92) выше минимума (80),
-    есть IT-программа, и твои шансы на грант — средние."
-    """
+def generate_ai_explanation(university_name, student_ent, uni_min_ent, specialties_match, grant_chance):
+    if specialties_match:
+        specs = ", ".join(specialties_match)
+    else:
+        specs = "нет данных"
 
-    system_prompt = """Ты — ассистент для абитуриентов. 
-    Напиши короткое, понятное объяснение (1-2 предложения), почему этот вуз подходит студенту.
-    Используй РУССКИЙ язык. Будь позитивен и мотивирующий."""
+    prompt = f"""Вуз: {university_name}
+ЕНТ студента: {student_ent}
+Минимальный ЕНТ: {uni_min_ent}
+Специальности: {specs}
+Шансы на грант: {grant_chance}
 
-    user_prompt = f"""
-    Вуз: {university_name}
-    ЕНТ студента: {student_ent}
-    Минимальный ЕНТ в вузе: {uni_min_ent}
-    Совпадающие специальности: {', '.join(specialties_match)}
-    Шансы на грант: {grant_chance}
-
-    Напиши объяснение, почему этот вуз подходит.
-    """
+Напиши короткое объяснение на русском."""
 
     try:
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=150,
-            system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ]
-        )
-
-        return message.content[0].text.strip()
+        response = model.generate_content(prompt)
+        return response.text.strip()
 
     except Exception as e:
-        print(f"Ошибка при генерации объяснения: {e}")
-        return f"Вуз {university_name} — хороший выбор для твоего профиля."
+        print(f"Error: {e}")
+        return f"Вуз {university_name} хороший выбор!"

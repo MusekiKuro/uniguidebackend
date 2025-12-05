@@ -1,0 +1,191 @@
+[
+  {
+    "id": 1,
+    "name": "KBTU (Kazakh-British Technical University)",
+    "city": "Алматы",
+    "type": "частный",
+    "description": "Ведущий технический университет Казахстана с сильной IT-программой и международными партнерствами",
+    "min_ent_score": 85,
+    "rating": 4.7,
+    "website": "https://kbtu.edu.kz",
+    "programs": [
+      {
+        "name": "Computer Science",
+        "duration": "4 года",
+        "cost_per_year": 3200000,
+        "grant_available": true,
+        "grant_percent": 30,
+        "min_ent_score": 85
+      },
+      {
+        "name": "Data Science",
+        "duration": "4 года",
+        "cost_per_year": 3200000,
+        "grant_available": true,
+        "grant_percent": 25,
+        "min_ent_score": 88
+      },
+      {
+        "name": "Software Engineering",
+        "duration": "4 года",
+        "cost_per_year": 3000000,
+        "grant_available": true,
+        "grant_percent": 30,
+        "min_ent_score": 85
+      }
+    ],
+    "dormitory": {
+      "available": true,
+      "cost_per_month": 150000
+    },
+    "tour_images": [
+      "https://kbtu.edu.kz/images/campus1.jpg",
+      "https://kbtu.edu.kz/images/campus2.jpg"
+    ],
+    "partnerships": ["MIT", "Imperial College London", "TU Berlin"]
+  },
+  {
+    "id": 2,
+    "name": "IITU (Международный университет информационных технологий)",
+    "city": "Алматы",
+    "type": "государственный",
+    "description": "Государственный IT-университет с акцентом на искусственный интеллект и кибербезопасность",
+    "min_ent_score": 88,
+    "rating": 4.5,
+    "website": "https://iitu.edu.kz",
+    "programs": [
+      {
+        "name": "Информационные системы",
+        "duration": "4 года",
+        "cost_per_year": 1800000,
+        "grant_available": true,
+        "grant_percent": 40,
+        "min_ent_score": 88
+      },
+      {
+        "name": "Искусственный интеллект",
+        "duration": "4 года",
+        "cost_per_year": 2000000,
+        "grant_available": true,
+        "grant_percent": 35,
+        "min_ent_score": 90
+      },
+      {
+        "name": "Кибербезопасность",
+        "duration": "4 года",
+        "cost_per_year": 1900000,
+        "grant_available": true,
+        "grant_percent": 38,
+        "min_ent_score": 89
+      }
+    ],
+    "dormitory": {
+      "available": true,
+      "cost_per_month": 120000
+    },
+    "tour_images": [],
+    "partnerships": ["Samsung", "Huawei", "Kaspersky Lab"]
+  },
+  {
+    "id": 3,
+    "name": "Astana IT University",
+    "city": "Астана",
+    "type": "государственный",
+    "description": "Специализированный IT-вуз столицы с современной инфраструктурой",
+    "min_ent_score": 82,
+    "rating": 4.4,
+    "website": "https://astanait.edu.kz",
+    "programs": [
+      {
+        "name": "Software Engineering",
+        "duration": "4 года",
+        "cost_per_year": 1700000,
+        "grant_available": true,
+        "grant_percent": 35,
+        "min_ent_score": 82
+      },
+      {
+        "name": "Data Analytics",
+        "duration": "4 года",
+        "cost_per_year": 1800000,
+        "grant_available": true,
+        "grant_percent": 32,
+        "min_ent_score": 84
+      }
+    ],
+    "dormitory": {
+      "available": true,
+      "cost_per_month": 100000
+    },
+    "tour_images": [],
+    "partnerships": ["Google", "Microsoft", "Yandex"]
+  },
+  {
+    "id": 4,
+    "name": "Satbayev University",
+    "city": "Алматы",
+    "type": "государственный",
+    "description": "Технический университет с сильной инженерной и IT базой",
+    "min_ent_score": 80,
+    "rating": 4.3,
+    "website": "https://satbayev.university",
+    "programs": [
+      {
+        "name": "Вычислительная техника",
+        "duration": "4 года",
+        "cost_per_year": 1600000,
+        "grant_available": true,
+        "grant_percent": 42,
+        "min_ent_score": 80
+      },
+      {
+        "name": "Информационные технологии",
+        "duration": "4 года",
+        "cost_per_year": 1650000,
+        "grant_available": true,
+        "grant_percent": 40,
+        "min_ent_score": 82
+      }
+    ],
+    "dormitory": {
+      "available": true,
+      "cost_per_month": 110000
+    },
+    "tour_images": [],
+    "partnerships": ["Siemens", "ABB", "Schlumberger"]
+  },
+  {
+    "id": 5,
+    "name": "Nazarbayev University",
+    "city": "Астана",
+    "type": "автономный",
+    "description": "Премиальный исследовательский университет с англоязычным обучением",
+    "min_ent_score": 110,
+    "rating": 4.9,
+    "website": "https://nu.edu.kz",
+    "programs": [
+      {
+        "name": "Computer Science",
+        "duration": "4 года",
+        "cost_per_year": 0,
+        "grant_available": true,
+        "grant_percent": 100,
+        "min_ent_score": 110
+      },
+      {
+        "name": "Robotics",
+        "duration": "4 года",
+        "cost_per_year": 0,
+        "grant_available": true,
+        "grant_percent": 100,
+        "min_ent_score": 112
+      }
+    ],
+    "dormitory": {
+      "available": true,
+      "cost_per_month": 0
+    },
+    "tour_images": [],
+    "partnerships": ["Cambridge", "Duke University", "Carnegie Mellon"]
+  }
+]

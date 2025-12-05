@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 from typing import List, Tuple
-from app.models.university import University, RecommendationResponse
+from models.university import University
+
 
 
 def load_universities() -> List[dict]:

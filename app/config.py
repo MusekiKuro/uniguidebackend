@@ -5,7 +5,7 @@ from typing import List
 
 class Settings(BaseSettings):
     # API Keys
-    anthropic_api_key: str = ""
+    gemini_api_key: str = ""
 
     # App Settings
     app_env: str = "development"
@@ -27,5 +27,4 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-# ✅ ГЛАВНОЕ: создаём экземпляр
 settings = Settings()

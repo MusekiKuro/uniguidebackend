@@ -4,9 +4,10 @@ from typing import List
 import json
 from pathlib import Path
 
-from app.models.university import StudentRequest, University
-from app.services.ai_service import parse_student_request, generate_ai_explanation
-from app.services.recommendation import get_recommendations, load_universities
+from models.university import StudentRequest, University
+from services.ai_service import parse_student_request, generate_ai_explanation
+from services.recommendation import get_recommendations, load_universities
+
 
 router = APIRouter(prefix="/api", tags=["api"])
 
