@@ -1,24 +1,9 @@
-# Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-
-# Data validation
-pydantic==2.5.0
-pydantic-settings==2.1.0
-
-# HTTP requests for AI APIs
-httpx==0.25.2
-requests==2.31.0
-
-# AI Integration (выбери один)
-anthropic==0.8.1          # Claude API
-# openai==1.6.1           # OpenAI API (альтернатива)
-
-# Environment variables
-python-dotenv==1.0.0
-
-# CORS
-python-multipart==0.0.6
-
-# Optional: Database (если захочешь SQLite вместо JSON)
-# sqlalchemy==2.0.23 
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.2
+pydantic-settings>=2.5.0
+httpx>=0.27.0
+requests>=2.32.0
+anthropic>=0.28.0
+python-dotenv>=1.0.1
+python-multipart>=0.0.7
