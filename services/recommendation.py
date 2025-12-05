@@ -7,9 +7,7 @@ from models.university import StudentRequest
 def load_universities():
     """Загружает данные вузов из JSON-файла."""
     data_path = Path(__file__).parent.parent / "data" / "universities.json"
-    # Убедитесь, что ваш JSON-файл существует и путь корректен
     if not data_path.exists():
-        # Если файл не найден, возвращаем пустой список, чтобы избежать ошибки
         print("Warning: universities.json not found!")
         return []
 
@@ -20,7 +18,6 @@ def load_universities():
 def filter_universities(ent_score, preferred_city=None, preferred_specialties=None, budget="any"):
     """
     Фильтрует вузы по базовым критериям (ЕНТ, город, специальность, грант).
-    Возвращает неотсортированный список всех подходящих вузов.
     """
     universities = load_universities()
     filtered = []
@@ -30,14 +27,11 @@ def filter_universities(ent_score, preferred_city=None, preferred_specialties=No
         if ent_score is not None and ent_score < uni["min_ent_score"] - 5:
             continue
 
-        # Фильтр по городу
         if preferred_city and uni["city"].lower() != preferred_city.lower():
             continue
 
-        # Фильтр по специальностям (проверяем программы)
         if preferred_specialties:
             programs = uni.get("programs", [])
-            # Проверяем совпадение по названию, коду или группе
             has_specialty = any(
                 any(
                     spec.lower() in prog["name"].lower() or
@@ -50,7 +44,6 @@ def filter_universities(ent_score, preferred_city=None, preferred_specialties=No
             if not has_specialty:
                 continue
 
-        # Фильтр по гранту
         if budget == "grant":
             programs_with_grant = [p for p in uni.get("programs", []) if p.get("grant_available")]
             if not programs_with_grant:
@@ -58,7 +51,6 @@ def filter_universities(ent_score, preferred_city=None, preferred_specialties=No
 
         filtered.append(uni)
 
-    # Возвращаем список без сортировки, так как сортировка будет в главной функции
     return filtered
 
 
@@ -73,20 +65,22 @@ def calculate_grant_chance(ent_score: int, program_min_score: int, program_grant
     base_chance = 0.0
 
     # Оценка шанса на основе разницы ЕНТ
-    if score_diff >= 10:
-        base_chance = 90.0
+    if score_diff >= 20:
+        base_chance = 95.0
+    elif score_diff >= 10:
+        base_chance = 85.0
     elif score_diff >= 5:
         base_chance = 70.0
     elif score_diff >= 0:
-        base_chance = 40.0
+        base_chance = 50.0
     elif score_diff >= -5:
-        base_chance = 20.0
+        base_chance = 25.0
     else:
-        base_chance = 5.0
+        base_chance = 10.0
 
-        # Корректировка по проценту грантов на программе (квота)
+    # Корректировка по проценту грантов на программе (квота)
     if program_grant_percent < 30:
-        base_chance *= 0.8
+        base_chance *= 0.85
     elif program_grant_percent > 50:
         base_chance *= 1.1
 
@@ -94,7 +88,7 @@ def calculate_grant_chance(ent_score: int, program_min_score: int, program_grant
 
     if final_chance >= 70:
         return ("Высокие", final_chance)
-    elif final_chance >= 30:
+    elif final_chance >= 40:
         return ("Средние", final_chance)
     else:
         return ("Низкие", final_chance)
@@ -103,32 +97,42 @@ def calculate_grant_chance(ent_score: int, program_min_score: int, program_grant
 def calculate_match_score(ent_score, uni_min_score, uni_rating, matching_count):
     """
     Расчет Match Score (0-100) на основе баллов, совпадения специальностей и рейтинга.
+    Улучшенная логика для высоких баллов ЕНТ.
     """
     score = 0.0
 
-    # 1. Вес за балл ЕНТ (40%)
+    # 1. Вес за балл ЕНТ (50%) - Увеличено значение
     if ent_score:
         ent_diff = ent_score - uni_min_score
-        if ent_diff >= 10:
-            score += 40
+        
+        # Улучшенная логика: чем выше балл, тем лучше совпадение
+        if ent_diff >= 20:
+            score += 50  # Отлично
+        elif ent_diff >= 10:
+            score += 45  # Очень хорошо
+        elif ent_diff >= 5:
+            score += 40  # Хорошо
         elif ent_diff >= 0:
-            score += 30
+            score += 30  # Достаточно
         elif ent_diff >= -5:
-            score += 15
+            score += 15  # На грани
         else:
-            score += 5
+            score += 5   # Низкий
     else:
         score += 20
 
-        # 2. Вес за совпадение специальностей (30%)
-    score += min(30, matching_count * 10)
+    # 2. Вес за совпадение специальностей (30%)
+    # Каждое совпадение +15 баллов, максимум 30
+    score += min(30, matching_count * 15)
 
-    # 3. Вес за рейтинг вуза (30%)
-    # Нормализация: 5.0 -> 30 баллов, 3.0 -> 0 баллов
-    normalized_rating = (uni_rating - 3.0) / 2.0 if uni_rating and uni_rating >= 3.0 else 0
-    score += normalized_rating * 30
+    # 3. Вес за рейтинг вуза (20%)
+    if uni_rating and uni_rating >= 3.0:
+        normalized_rating = (uni_rating - 3.0) / 2.0
+        score += normalized_rating * 20
+    else:
+        score += 5  # Минимальный бонус для низкого рейтинга
 
-    return round(score, 1)
+    return round(min(100, score), 1)
 
 
 def recommend_by_structured_data(request: StudentRequest):
@@ -140,9 +144,7 @@ def recommend_by_structured_data(request: StudentRequest):
     preferred_specialties = request.preferred_specialties
     budget = request.budget
 
-    # 1. Фильтрация
     filtered_unis = filter_universities(ent_score, preferred_city, preferred_specialties, budget)
-
     recommendations = []
 
     for uni in filtered_unis:
@@ -156,11 +158,9 @@ def recommend_by_structured_data(request: StudentRequest):
         for prog in uni.get("programs", []):
             is_match = False
 
-            # Проверка совпадения специальностей
             for spec in preferred_specialties:
                 spec_lower = spec.lower()
 
-                # Приоритет совпадениям по кодам
                 if (prog.get("group_code") and spec_lower == prog["group_code"].lower()) or \
                         (prog.get("code") and spec_lower == prog["code"].lower()) or \
                         (spec_lower in prog["name"].lower()):
@@ -171,7 +171,6 @@ def recommend_by_structured_data(request: StudentRequest):
                 matching_count += 1
                 matching_specs.append(prog["name"])
 
-                # Выбираем программу с самым высоким проходным баллом для расчета шансов
                 if prog["min_ent_score"] > best_min_ent_score:
                     best_min_ent_score = prog["min_ent_score"]
                     best_program = prog
@@ -184,7 +183,6 @@ def recommend_by_structured_data(request: StudentRequest):
                 best_program.get("grant_percent", 50)
             )
         else:
-            # Фоллбэк: используем общий мин. балл вуза, если программа не найдена
             grant_chance, grant_percentage = calculate_grant_chance(
                 ent_score,
                 uni["min_ent_score"],
@@ -207,7 +205,7 @@ def recommend_by_structured_data(request: StudentRequest):
             "matching_specialties": list(set(matching_specs))
         })
 
-    # 2. Сортировка по Match Score и ограничение топ-5
+    # Сортировка по Match Score
     recommendations.sort(key=lambda x: x["match_score"], reverse=True)
 
-    return recommendations[:5]  # Возвращаем топ-5 рекомендаций
+    return recommendations[:5]
