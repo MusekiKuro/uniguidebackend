@@ -1,40 +1,14 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# .gitignore
 venv/
-env/
-ENV/
-.venv
-
-# Environment variables
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
 .env
-
-# IDE
+.env.local
+.DS_Store
+*.db
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Database (если будешь использовать SQLite)
-*.db
-*.sqlite3
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Distribution
-build/
 dist/
-*.egg-info/
+build/
