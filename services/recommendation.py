@@ -1,30 +1,16 @@
-# app/services/recommendation.py
+# services/recommendation.py
 import json
 from pathlib import Path
 from typing import List, Tuple
-from models.university import University
 
 
-
-def load_universities() -> List[dict]:
-    """Загружаем вузы из JSON."""
+def load_universities():
     data_path = Path(__file__).parent.parent / "data" / "universities.json"
     with open(data_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def calculate_grant_chance(ent_score: int, min_ent_score: int) -> Tuple[str, float]:
-    """
-    Расчёт шансов на грант (Вариант В).
-
-    Логика:
-    - Если ent >= min + 10: Высокие (75%)
-    - Если ent >= min: Средние (45%)
-    - Иначе: Низкие (15%)
-
-    Возвращает: ("Высокие", 75.0)
-    """
-
+def calculate_grant_chance(ent_score, min_ent_score):
     if ent_score is None:
         return ("Неизвестно", 0)
 
@@ -36,126 +22,79 @@ def calculate_grant_chance(ent_score: int, min_ent_score: int) -> Tuple[str, flo
         return ("Низкие", 15.0)
 
 
-def filter_universities(
-        ent_score: int,
-        preferred_city: str = None,
-        preferred_specialties: List[str] = None,
-        budget: str = "any"
-) -> List[dict]:
-    """
-    Фильтрует вузы по критериям абитуриента.
-
-    Возвращает отсортированный по релевантности список вузов.
-    """
-
+def filter_universities(ent_score, preferred_city=None, preferred_specialties=None, budget="any"):
     universities = load_universities()
     filtered = []
 
     for uni in universities:
-        # Фильтр 1: ЕНТ баллы
-        # Если ent_score == None, пропускаем этот фильтр
+        # Фильтр по ЕНТ
         if ent_score is not None and ent_score < uni["min_ent_score"] - 5:
-            continue  # Слишком низко
+            continue
 
-        # Фильтр 2: Город
+        # Фильтр по городу
         if preferred_city and uni["city"].lower() != preferred_city.lower():
             continue
 
-        # Фильтр 3: Специальности
+        # Фильтр по специальностям (проверяем программы)
         if preferred_specialties:
+            programs = uni.get("programs", [])
             has_specialty = any(
-                spec.lower() in [s.lower() for s in uni["specialties"]]
-                for spec in preferred_specialties
+                any(spec.lower() in prog["name"].lower() for spec in preferred_specialties)
+                for prog in programs
             )
             if not has_specialty:
                 continue
 
-        # Фильтр 4: Грант
-        if budget == "grant" and uni["grant_places"] == 0:
-            continue
+        # Фильтр по гранту
+        if budget == "grant":
+            programs_with_grant = [p for p in uni.get("programs", []) if p.get("grant_available")]
+            if not programs_with_grant:
+                continue
 
         filtered.append(uni)
 
-    # Сортируем по релевантности
+    # Сортировка
     def relevance_score(uni):
         score = 0
-
-        # Близость по ЕНТ (чем ближе, тем лучше)
         if ent_score is not None:
             ent_diff = abs(ent_score - uni["min_ent_score"])
-            score += (100 - ent_diff)  # Чем ближе, тем выше
+            score += (100 - ent_diff)
         else:
             score += 50
 
-        # Наличие гранта (если ищет грант)
-        if budget == "grant" and uni["grant_places"] > 0:
-            score += 30
-
-        # Количество специальностей
-        score += len(uni["specialties"]) * 5
-
+        score += len(uni.get("programs", [])) * 5
         return score
 
     filtered.sort(key=relevance_score, reverse=True)
+    return filtered[:5]
 
-    return filtered[:5]  # Возвращаем топ-5
 
-
-def get_recommendations(
-        ent_score: int = None,
-        preferred_city: str = None,
-        preferred_specialties: List[str] = None,
-        budget: str = "any"
-) -> List[dict]:
-    """
-    Главная функция рекомендаций.
-
-    Возвращает список вузов с объяснением и шансами на грант.
-    """
-
-    # Фильтруем вузы
-    filtered_unis = filter_universities(
-        ent_score,
-        preferred_city,
-        preferred_specialties,
-        budget
-    )
+def get_recommendations(ent_score=None, preferred_city=None, preferred_specialties=None, budget="any"):
+    filtered_unis = filter_universities(ent_score, preferred_city, preferred_specialties, budget)
 
     recommendations = []
 
-    for uni in filtered_unis[:4]:  # Топ-4 вуза
-        # Рассчитываем шансы на грант
-        grant_chance, grant_percentage = calculate_grant_chance(
-            ent_score,
-            uni["min_ent_score"]
-        )
+    for uni in filtered_unis[:4]:
+        grant_chance, grant_percentage = calculate_grant_chance(ent_score, uni["min_ent_score"])
 
         # Совпадающие специальности
         matching_specs = []
         if preferred_specialties:
-            matching_specs = [
-                spec for spec in uni["specialties"]
-                if spec.lower() in [s.lower() for s in preferred_specialties]
-            ]
+            programs = uni.get("programs", [])
+            for prog in programs:
+                for spec in preferred_specialties:
+                    if spec.lower() in prog["name"].lower():
+                        matching_specs.append(prog["name"])
 
-        # Релевантность (простой расчёт)
-        match_score = 75.0  # По умолчанию
+        # Match score
+        match_score = 75.0
         if ent_score and ent_score >= uni["min_ent_score"]:
             match_score = 85.0
         if ent_score and ent_score >= uni["min_ent_score"] + 10:
             match_score = 95.0
 
         recommendations.append({
-            "university": {
-                "id": uni["id"],
-                "name": uni["name"],
-                "city": uni["city"],
-                "min_ent_score": uni["min_ent_score"],
-                "grant_places": uni["grant_places"],
-                "specialties": uni["specialties"],
-                "description": uni["description"],
-                "website": uni.get("website")
-            },
+            "university": uni,
             "match_score": match_score,
             "grant_chance": grant_chance,
             "grant_percentage": grant_percentage,

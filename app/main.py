@@ -10,9 +10,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CORS - разрешить ВСЁ для разработки
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins,
+    allow_origins=["*"],  # ← ИЗМЕНЕНО! Разрешить всё
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
